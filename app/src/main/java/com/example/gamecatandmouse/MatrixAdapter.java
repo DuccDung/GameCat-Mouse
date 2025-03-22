@@ -14,10 +14,41 @@ public class MatrixAdapter extends RecyclerView.Adapter<MatrixAdapter.MatrixView
     private int[][] matrix;  // Ma trận lưu trữ các ô
     private int selectedX = 0, selectedY = 0;  // Vị trí phần tử đỏ
     private int selectedX2 = 0, selectedY2 = 1; // Vị trí phần tử thứ hai (màu khác)
+    public int getSelectedX1() {
+        return selectedX;
+    }
 
-    public MatrixAdapter(Context context, int rows, int cols) {
+    public int getSelectedY1() {
+        return selectedY;
+    }
+
+    public int getSelectedX2() {
+        return selectedX2;
+    }
+
+    public int getSelectedY2() {
+        return selectedY2;
+    }
+
+    public int getRowCount() {
+        return matrix.length;
+    }
+
+    public int getColCount() {
+        return matrix[0].length;
+    }
+    public void setWall(int x, int y) {
+        matrix[x][y] = -1;
+        notifyDataSetChanged();
+    }
+
+    public int[][] getMatrix() {
+        return matrix;
+    }
+
+    public MatrixAdapter(Context context, int _matrix[][]) {
         this.context = context;
-        matrix = new int[rows][cols];  // Tạo ma trận
+        matrix = _matrix;  // Tạo ma trận
         matrix[selectedX][selectedY] = 1;  // Phần tử đỏ tại vị trí đầu
         matrix[selectedX2][selectedY2] = 2; // Phần tử thứ hai (màu khác)
     }
@@ -38,9 +69,14 @@ public class MatrixAdapter extends RecyclerView.Adapter<MatrixAdapter.MatrixView
             holder.itemView.setBackgroundColor(Color.RED);  // Phần tử đỏ
         } else if (matrix[row][col] == 2) {
             holder.itemView.setBackgroundColor(Color.GREEN);  // Phần tử thứ hai (màu khác)
-        } else {
+        }
+        else if (matrix[row][col] == -1) {
+            holder.itemView.setBackgroundColor(Color.BLACK);  // Màu tường
+        }
+        else {
             holder.itemView.setBackgroundColor(Color.GRAY);  // Các phần tử xám
         }
+
     }
 
     @Override
