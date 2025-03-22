@@ -10,6 +10,7 @@ import android.view.MotionEvent;
 import android.widget.Button;
 import android.graphics.Rect;
 import android.view.View;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -21,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
     private Runnable runnablePart2 = null;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,11 +31,8 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 20));  // 10 cột trong ma trận
 
         int[][] matrix = new int[20][20];
+        matrix[2][2] = 3;
         matrixAdapter = new MatrixAdapter(this, matrix);
-
-        matrixAdapter.setWall(3, 4); // Đặt tường tại vị trí (3,4)
-        matrixAdapter.setWall(5, 5); // Tường tại (5,5)
-
         recyclerView.setAdapter(matrixAdapter);
 
 
@@ -50,93 +47,30 @@ public class MainActivity extends AppCompatActivity {
         downButton2 = findViewById(R.id.down_button2);
         leftButton2 = findViewById(R.id.left_button2);
         rightButton2 = findViewById(R.id.right_button2);
-
-        upButton2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // Tự tìm đường cho phần tử 2 (xanh) đến vị trí (5,5) chẳng hạn
-                hillClimbMove(2, 3, 5);
-            }
-        });
+        upButton2.setOnClickListener(v -> autoMoveStepByStep());
 
     }
-    private void hillClimbMove(int part, int goalX, int goalY) {
-        final Handler handler = new Handler();
-        final int[] currentX = new int[1];
-        final int[] currentY = new int[1];
 
-        if (part == 1) {
-            currentX[0] = matrixAdapter.getSelectedX1();
-            currentY[0] = matrixAdapter.getSelectedY1();
-        } else {
-            currentX[0] = matrixAdapter.getSelectedX2();
-            currentY[0] = matrixAdapter.getSelectedY2();
+    private void autoMoveStepByStep() {
+        int direction = matrixAdapter.getNextMoveBFS();
+
+        if (direction == -2 || matrixAdapter.isAtGoal()) {
+            Toast.makeText(this, "Tới đích!", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (currentX[0] == goalX && currentY[0] == goalY) {
-                    return; // Đã đến đích
-                }
+        if (direction == -1) {
+            Toast.makeText(this, "Không tìm thấy đường!", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-                int up = (currentY[0] - 1 >= 0 && matrixAdapter.getMatrix()[currentX[0]][currentY[0] - 1] != -1)
-                        ? distance(currentX[0], currentY[0] - 1, goalX, goalY)
-                        : Integer.MAX_VALUE;
+        matrixAdapter.moveItem(direction, 1);
 
-                int down = (currentY[0] + 1 < matrixAdapter.getRowCount() && matrixAdapter.getMatrix()[currentX[0]][currentY[0] + 1] != -1)
-                        ? distance(currentX[0], currentY[0] + 1, goalX, goalY)
-                        : Integer.MAX_VALUE;
-
-                int left = (currentX[0] - 1 >= 0 && matrixAdapter.getMatrix()[currentX[0] - 1][currentY[0]] != -1)
-                        ? distance(currentX[0] - 1, currentY[0], goalX, goalY)
-                        : Integer.MAX_VALUE;
-
-                int right = (currentX[0] + 1 < matrixAdapter.getColCount() && matrixAdapter.getMatrix()[currentX[0] + 1][currentY[0]] != -1)
-                        ? distance(currentX[0] + 1, currentY[0], goalX, goalY)
-                        : Integer.MAX_VALUE;
-
-                int[] moves = {up, right, down, left};
-                int minIndex = 0;
-                int minValue = moves[0];
-                for (int i = 1; i < 4; i++) {
-                    if (moves[i] < minValue) {
-                        minValue = moves[i];
-                        minIndex = i;
-                    }
-                }
-
-                switch (minIndex) {
-                    case 0:
-                        currentY[0]--;
-                        matrixAdapter.moveItem(0, part);
-                        break;
-                    case 1:
-                        currentX[0]++;
-                        matrixAdapter.moveItem(3, part); // Lưu ý: moveItem(3, part) là phải
-                        break;
-                    case 2:
-                        currentY[0]++;
-                        matrixAdapter.moveItem(1, part);
-                        break;
-                    case 3:
-                        currentX[0]--;
-                        matrixAdapter.moveItem(2, part);
-                        break;
-                }
-
-                if (minValue != Integer.MAX_VALUE && (currentX[0] != goalX || currentY[0] != goalY)) {
-                    handler.postDelayed(this, 300); // Chạy tiếp sau 300ms
-                }
-            }
-        };
-
-        handler.post(runnable);
+        new Handler().postDelayed(this::autoMoveStepByStep, 200);
     }
 
-    private int distance(int x1, int y1, int x2, int y2) {
-        return Math.abs(x1 - x2) + Math.abs(y1 - y2);
-    }
+
+
 
 }
 
